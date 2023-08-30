@@ -27,7 +27,7 @@ func JsonFromIOReader(container any, input io.Reader) error {
 		return te.XError{
 			Code:        "parse-fail",
 			Message:     "failed to parse input, error:" + err.Error(),
-			ExpectedVal: fmt.Sprintf("value of %v", structName),
+			ExpectedVal: "value of" + structName,
 		}
 	}
 
@@ -61,10 +61,16 @@ func FormDataFromHttp(container any, r *http.Request) error {
 
 		key := keyOrJsonTag(ft.Name, ft.Tag.Get("json"))
 
+		rv := r.PostFormValue(key)
+		if rv == "" {
+			// try once more if fail, mostly not called tho
+			r.ParseForm()
+			rv = r.FormValue(key)
+		}
 		fName := ft.Name
-		rv := r.FormValue(key)
 		ftName := ft.Type.String()
 		ftNameClean := strings.Trim(ftName, "*")
+		fmt.Println(fName, ftName, rv, fv.Kind())
 		switch {
 		case ftName == "string":
 			fv.SetString(rv)

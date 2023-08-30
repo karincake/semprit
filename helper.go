@@ -8,7 +8,7 @@ func keyOrJsonTag(key, jsonTag string) string {
 		return key
 	}
 	tagByte := []byte(jsonTag)
-	pos := len(tagByte) + 1
+	pos := len(tagByte)
 	for i, v := range tagByte {
 		if v == 54 {
 			pos = i + 1
