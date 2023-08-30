@@ -2,7 +2,7 @@ package semprit
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"io"
 	"net/http"
 	"net/url"
@@ -55,86 +55,62 @@ func HttpFormData(container any, r *http.Request) error {
 		// identify field type and value of the field
 		ft := ct.Field(i)
 		fv := cv.Field(i)
+
+		for fv.Kind() == reflect.Ptr {
+			fv = fv.Elem()
+		}
 		if !fv.CanSet() {
 			continue
 		}
 
 		key := keyOrJsonTag(ft.Name, ft.Tag.Get("json"))
-
 		rv := r.PostFormValue(key)
 		if rv == "" {
 			// try once more if fail, mostly not called tho
 			r.ParseForm()
 			rv = r.FormValue(key)
 		}
-		fName := ft.Name
-		ftName := ft.Type.String()
-		ftNameClean := strings.Trim(ftName, "*")
+
+		fvKind := fv.Kind()
+		ftName := ft.Name
+		// fvKindString := fvKind.String()
+		// ftTypeName := ft.Type
+		// fmt.Println(fvKindString, ftTypeName)
 
 		switch {
-		case ftName == "string":
+		case fvKind == reflect.String:
 			fv.SetString(rv)
-		case ftName == "*string" && !fv.IsNil():
-			reflect.Indirect(fv).SetString(rv)
-		case ftName == "bool":
-			if rv == "true" {
+		case fvKind == reflect.Bool:
+			if rv == "true" || rv == "yes" || rv == "1" {
 				fv.SetBool(true)
-			} else {
+			} else if rv == "false" || rv == "no" || rv == "0" {
 				fv.SetBool(false)
 			}
-		case ftName == "*bool" && !fv.IsNil():
-			if rv == "true" {
-				reflect.Indirect(fv).SetBool(true)
-			} else if rv == "false" {
-				reflect.Indirect(fv).SetBool(false)
-			}
-		case len(ftNameClean) >= 4 && ftNameClean[:4] == "uint": // bundle in one
+		case fvKind >= reflect.Uint && fvKind <= reflect.Uint64:
 			if rv != "" {
 				rvVal, err := strconv.ParseUint(rv, 10, 64)
 				if err != nil {
-					return fmt.Errorf("can not convert %s into number", fName)
-				} else {
-					if ftName[:1] != "*" {
-						if fv.OverflowUint(uint64(rvVal)) {
-							return fmt.Errorf("value overflow for %s", fName)
-						} else {
-							fv.SetUint(uint64(rvVal))
-						}
-					} else if !fv.IsNil() {
-						if reflect.Indirect(fv).OverflowUint(uint64(rvVal)) {
-							return fmt.Errorf("value overflow for %s", fName)
-						} else {
-							reflect.Indirect(fv).SetUint(uint64(rvVal))
-						}
-					}
+					return errors.New("can not convert \"" + ftName + "\" (value: " + rv + ") into number")
 				}
-			} else if ftName[:1] != "*" {
-				fv.SetInt(0)
+				if fv.OverflowUint(uint64(rvVal)) {
+					return errors.New("value overflow for \"" + ftName + "\" (value: " + rv + ")")
+				} else {
+					fv.SetUint(uint64(rvVal))
+				}
 			}
-		case len(ftNameClean) >= 3 && ftNameClean[:3] == "int": // bundle in one
+		case fvKind >= reflect.Int && fvKind <= reflect.Int64:
 			if rv != "" {
 				rvVal, err := strconv.Atoi(rv)
 				if err != nil {
-					return fmt.Errorf("can not convert %s into number", fName)
-				} else {
-					if ftName[:1] != "*" {
-						if fv.OverflowInt(int64(rvVal)) {
-							return fmt.Errorf("value overflow for %s", fName)
-						} else {
-							fv.SetInt(int64(rvVal))
-						}
-					} else if !fv.IsNil() {
-						if reflect.Indirect(fv).OverflowInt(int64(rvVal)) {
-							return fmt.Errorf("value overflow for %s", fName)
-						} else {
-							reflect.Indirect(fv).SetInt(int64(rvVal))
-						}
-					}
+					return errors.New("can not convert \"" + ftName + "\" (value: " + rv + ") into number")
 				}
-			} else if ftName[:1] != "*" {
-				fv.SetInt(0)
+				if fv.OverflowInt(int64(rvVal)) {
+					return errors.New("value overflow for \"" + ftName + "\" (value: " + rv + ")")
+				} else {
+					fv.SetInt(int64(rvVal))
+				}
 			}
-		case len(ftNameClean) >= 5 && ftNameClean[:5] == "float": // bundle in one
+		case fvKind >= reflect.Float32 && fvKind <= reflect.Float64:
 			if rv != "" {
 				floatType := 32
 				if ftName == "float64" {
@@ -142,24 +118,13 @@ func HttpFormData(container any, r *http.Request) error {
 				}
 				rvVal, err := strconv.ParseFloat(rv, floatType)
 				if err != nil {
-					return fmt.Errorf("can not convert %s into number", fName)
-				} else {
-					if ftName[:1] != "*" {
-						if fv.OverflowFloat(rvVal) {
-							return fmt.Errorf("value overflow for %s", fName)
-						} else {
-							fv.SetFloat(rvVal)
-						}
-					} else if !fv.IsNil() {
-						if reflect.Indirect(fv).OverflowFloat(rvVal) {
-							return fmt.Errorf("value overflow for %s", fName)
-						} else {
-							reflect.Indirect(fv).SetFloat(rvVal)
-						}
-					}
+					return errors.New("can not convert \"" + ftName + "\" (value: " + rv + ") into number")
 				}
-			} else if ftName[:1] != "*" {
-				fv.SetFloat(0)
+				if fv.OverflowFloat(rvVal) {
+					return errors.New("value overflow for \"" + ftName + "\" (value: " + rv + ")")
+				} else {
+					fv.SetFloat(rvVal)
+				}
 			}
 		}
 	}

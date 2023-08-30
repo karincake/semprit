@@ -11,7 +11,7 @@ import (
 )
 
 func TestMediumDataNormal(t *testing.T) {
-	// data and wanted
+	// data
 	dataAddress := ""
 	dataSocialScore := 0
 	dataHoursActive := uint(0)
@@ -20,6 +20,8 @@ func TestMediumDataNormal(t *testing.T) {
 		SocialScore: &dataSocialScore,
 		HoursActive: &dataHoursActive,
 	}
+
+	// want
 	wantAddress := "JL Localhost 2023"
 	wantSocialScore := 25000
 	wantHoursActive := uint(30000)
@@ -37,7 +39,7 @@ func TestMediumDataNormal(t *testing.T) {
 		NetWorth:      200000,
 	}
 
-	// mock request, make it fast import from "want"
+	// mock request, make it fast: import from "want"
 	r, _ := http.NewRequest("POST", "/", nil)
 	r.PostForm = make(url.Values)
 	r.PostForm.Add("name", want.Name)
@@ -62,7 +64,7 @@ func TestMediumDataNormal(t *testing.T) {
 			t.Error("failed to parse ")
 			fmt.Println("data:", data)
 			fmt.Println("want:", want)
-			fmt.Println("social addess", *data.Address, *want.Address)
+			fmt.Println("social address", *data.Address, *want.Address)
 			fmt.Println("social score", *data.SocialScore, *want.SocialScore)
 			fmt.Println("social score", *data.HoursActive, *want.HoursActive)
 		}
@@ -73,17 +75,19 @@ func TestMediumDataCustom(t *testing.T) {
 	// mock request
 	r, _ := http.NewRequest("POST", "/", nil)
 	r.PostForm = make(url.Values)
-	r.PostForm.Add("name", "Santo Sembodo")
-	r.PostForm.Add("married", "true")
-	r.PostForm.Add("score", "20")
-	r.PostForm.Add("creditScore", "-10")
-	r.PostForm.Add("age", "80")
-	r.PostForm.Add("hoursActive", "181500")
-	r.PostForm.Add("income", "800")
-	r.PostForm.Add("netWorth", "200000")
+	r.PostForm.Add("nameValidity", "valid")
+	r.PostForm.Add("marriedStatus", "true")
+	r.PostForm.Add("scoreClass", "1")
+	r.PostForm.Add("creditScoreClass", "1")
+	r.PostForm.Add("ageClass", "1")
+	r.PostForm.Add("hoursActiveClass", "1")
+	r.PostForm.Add("incomeClass", "1")
+	r.PostForm.Add("netWorthClass", "1")
 
-	// data and wanted
+	// data
 	data := DataMediumCT{}
+
+	// want
 	want := DataMediumCT{
 		NameValidity:      CTSValid,
 		MarriedStatus:     CTBValid,
@@ -99,8 +103,8 @@ func TestMediumDataCustom(t *testing.T) {
 		t.Error("failed to parse request: ", err)
 	} else {
 		if data != want {
-			fmt.Println(data)
-			fmt.Println(want)
+			fmt.Println("data: ", data)
+			fmt.Println("want: ", want)
 			t.Error("failed to parse ")
 		}
 	}
