@@ -70,7 +70,7 @@ func HttpFormData(container any, r *http.Request) error {
 		fName := ft.Name
 		ftName := ft.Type.String()
 		ftNameClean := strings.Trim(ftName, "*")
-		// fmt.Println(fName, ftName, rv, fv.Kind())
+
 		switch {
 		case ftName == "string":
 			fv.SetString(rv)

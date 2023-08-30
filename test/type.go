@@ -11,8 +11,8 @@ type CustomTypeFloat64 float64
 
 const CTSValid CustomTypeString = "valid"
 const CTSInvalid CustomTypeString = "Invalid"
-const CTBSuccess CustomTypeBool = true
-const CTBFail CustomTypeBool = false
+const CTBValid CustomTypeBool = true
+const CTBInvalid CustomTypeBool = false
 const CTI8First CustomTypeInt8 = 1
 const CTI8Second CustomTypeInt8 = 2
 const CTIFirst CustomTypeInt = 1
@@ -23,8 +23,8 @@ const CTUFirst CustomTypeUint = 1
 const CTUSecond CustomTypeUint = 2
 const CTFFirst CustomTypeFloat32 = 1
 const CTFSecond CustomTypeFloat32 = 2
-const CTF6First CustomTypeFloat64 = 1
-const CTF6Second CustomTypeFloat64 = 2
+const CTF64First CustomTypeFloat64 = 1
+const CTF64Second CustomTypeFloat64 = 2
 
 type DataSmallString struct {
 	Name string `json:"name"`
@@ -91,23 +91,26 @@ type DataSmallCustomTypeFloat64 struct {
 }
 
 type DataMedium struct {
-	Name        string  `json:"name"`
-	Married     bool    `json:"married"`
-	Score       int8    `json:"score"`
-	CreditScore int     `json:"creditScore"`
-	Age         uint8   `json:"age"`
-	HoursActive uint    `json:"hoursActive"`
-	Income      float32 `json:"income"`
-	NetWorth    float64 `json:"netWorth"`
+	Name          string  `json:"name"`
+	Address       *string `json:"address,omitempty"`
+	Married       bool    `json:"married"`
+	Score         int8    `json:"score"`
+	CreditScore   int16   `json:"creditScore"`
+	SocialScore   *int    `json:"socialScore"`
+	Age           uint8   `json:"age"`
+	BloodPressure uint16  `json:"bloodPressure"`
+	HoursActive   *uint   `json:"hoursActive,omitempty"`
+	Income        float32 `json:"income"`
+	NetWorth      float64 `json:"netWorth"`
 }
 
 type DataMediumCT struct {
-	Name         CustomTypeString  `json:"name"`
-	Married      CustomTypeBool    `json:"married"`
-	Score        CustomTypeInt8    `json:"score"`
-	CreditScore  CustomTypeInt     `json:"creditScore"`
-	Age          CustomTypeUint8   `json:"age"`
-	HoursActive  CustomTypeUint    `json:"hoursActive"`
-	IncomeRate   CustomTypeFloat32 `json:"income"`
-	NetWorthRate CustomTypeFloat64 `json:"netWorth"`
+	NameValidity      CustomTypeString  `json:"name"`
+	MarriedStatus     CustomTypeBool    `json:"married"`
+	ScoreClass        CustomTypeInt8    `json:"score"`
+	CreditScoreClass  CustomTypeInt     `json:"creditScore"`
+	AgeClass          CustomTypeUint8   `json:"age"`
+	HoursActiveClass  CustomTypeUint    `json:"hoursActive"`
+	IncomeRateClass   CustomTypeFloat32 `json:"income"`
+	NetWorthRateClass CustomTypeFloat64 `json:"netWorth"`
 }

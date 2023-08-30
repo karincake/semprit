@@ -3,15 +3,14 @@ package semprit
 import "reflect"
 
 func keyOrJsonTag(key, jsonTag string) string {
-	// jsonTag := t.Tag.Get("json")
 	if jsonTag == "" {
 		return key
 	}
 	tagByte := []byte(jsonTag)
 	pos := len(tagByte)
 	for i, v := range tagByte {
-		if v == 54 {
-			pos = i + 1
+		if v == 44 {
+			pos = i
 		}
 	}
 	return string(tagByte[:pos])
