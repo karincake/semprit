@@ -15,7 +15,7 @@ import (
 	"gorm.io/datatypes"
 )
 
-func JsonFromIOReader(container any, input io.Reader) error {
+func IOReaderJson(container any, input io.Reader) error {
 	decoder := json.NewDecoder(input)
 	err := decoder.Decode(&container)
 	if err != nil {
@@ -27,14 +27,14 @@ func JsonFromIOReader(container any, input io.Reader) error {
 		return te.XError{
 			Code:        "parse-fail",
 			Message:     "failed to parse input, error:" + err.Error(),
-			ExpectedVal: fmt.Sprintf("value of %v", structName),
+			ExpectedVal: "value of" + structName,
 		}
 	}
 
 	return nil
 }
 
-func FormDataFromHttp(container any, r *http.Request) error {
+func HttpFormData(container any, r *http.Request) error {
 	// identiy value and loop if its pointer until reaches non pointer
 	cv := reflect.ValueOf(container)
 
@@ -43,7 +43,7 @@ func FormDataFromHttp(container any, r *http.Request) error {
 		cv = cv.Elem()
 	}
 
-	// non struct cant be validated
+	// non struct cant be filled
 	if cv.Kind() != reflect.Struct {
 		panic("input requires struct type")
 	}
@@ -61,10 +61,16 @@ func FormDataFromHttp(container any, r *http.Request) error {
 
 		key := keyOrJsonTag(ft.Name, ft.Tag.Get("json"))
 
+		rv := r.PostFormValue(key)
+		if rv == "" {
+			// try once more if fail, mostly not called tho
+			r.ParseForm()
+			rv = r.FormValue(key)
+		}
 		fName := ft.Name
-		rv := r.FormValue(key)
 		ftName := ft.Type.String()
 		ftNameClean := strings.Trim(ftName, "*")
+
 		switch {
 		case ftName == "string":
 			fv.SetString(rv)
@@ -81,6 +87,29 @@ func FormDataFromHttp(container any, r *http.Request) error {
 				reflect.Indirect(fv).SetBool(true)
 			} else if rv == "false" {
 				reflect.Indirect(fv).SetBool(false)
+			}
+		case len(ftNameClean) >= 4 && ftNameClean[:4] == "uint": // bundle in one
+			if rv != "" {
+				rvVal, err := strconv.ParseUint(rv, 10, 64)
+				if err != nil {
+					return fmt.Errorf("can not convert %s into number", fName)
+				} else {
+					if ftName[:1] != "*" {
+						if fv.OverflowUint(uint64(rvVal)) {
+							return fmt.Errorf("value overflow for %s", fName)
+						} else {
+							fv.SetUint(uint64(rvVal))
+						}
+					} else if !fv.IsNil() {
+						if reflect.Indirect(fv).OverflowUint(uint64(rvVal)) {
+							return fmt.Errorf("value overflow for %s", fName)
+						} else {
+							reflect.Indirect(fv).SetUint(uint64(rvVal))
+						}
+					}
+				}
+			} else if ftName[:1] != "*" {
+				fv.SetInt(0)
 			}
 		case len(ftNameClean) >= 3 && ftNameClean[:3] == "int": // bundle in one
 			if rv != "" {
@@ -137,7 +166,7 @@ func FormDataFromHttp(container any, r *http.Request) error {
 	return nil
 }
 
-func QueryParamFromUrl(container any, url url.URL) error {
+func UrlQueryParam(container any, url url.URL) error {
 	cV := reflect.ValueOf(container).Elem()
 	for cV.Kind() == reflect.Pointer || cV.Kind() == reflect.Interface {
 		cV = cV.Elem()
