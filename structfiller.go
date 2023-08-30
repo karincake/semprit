@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	te "github.com/karincake/tempe/error"
+	"gorm.io/datatypes"
 )
 
 func JsonFromIOReader(container any, input io.Reader) error {
@@ -144,6 +147,119 @@ func FDFromHttp(container any, r *http.Request) error {
 	return nil
 }
 
-func QueryParams() {
+func QPFromHttp(container any, url url.URL) error {
+	cV := reflect.ValueOf(container).Elem()
+	for cV.Kind() == reflect.Pointer || cV.Kind() == reflect.Interface {
+		cV = cV.Elem()
+	}
 
+	cT := cV.Type()
+	values := url.Query()
+	for i := 0; i < cV.NumField(); i++ {
+		fieldV := cV.Field(i)
+		fieldT := cT.Field(i)
+
+		if !fieldV.CanSet() {
+			continue
+		}
+
+		key := keyOrJsonTag(fieldT.Name, fieldT.Tag.Get("json"))
+
+		vals, ok := values[key]
+		if !ok {
+			continue
+		}
+
+		switch fieldV.Interface().(type) {
+		case bool, *bool:
+			var v bool
+			fieldVS := strings.ToLower(vals[0])
+			if fieldVS == "true" || fieldVS == "yes" || fieldVS == "1" {
+				v = true
+			} else if fieldVS == "false" || fieldVS == "no" || fieldVS == "0" {
+				v = false
+			} else {
+				return te.XError{Code: "bool-parse-fail", Message: "failed to parse bool value into field " + key}
+			}
+			if fieldV.Kind() == reflect.Ptr {
+				fieldV.Set(reflect.ValueOf(&v))
+			} else {
+				fieldV.Set(reflect.ValueOf(v))
+			}
+		case string, *string:
+			if fieldV.Kind() == reflect.Ptr {
+				fieldV.Set(reflect.ValueOf(&vals[0]))
+			} else {
+				fieldV.Set(reflect.ValueOf(vals[0]))
+			}
+		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, *int, *int8, *int16, *int32, *int64, *uint, *uint8, *uint16, *uint32, *uint64:
+			if valInt, err := strconv.Atoi(vals[0]); err != nil {
+				return te.XError{Code: "int-parse-fail", Message: "failed to parse int value into field " + key}
+			} else {
+				fieldV.Set(intToVal(valInt, fieldV))
+			}
+		case float64, *float64:
+			strFloat, err := strconv.ParseFloat(vals[0], 64)
+			if err != nil {
+				return te.XError{Code: "float32-parse-fail", Message: "failed to parse float32 value into field " + key}
+			}
+			if fieldV.Kind() == reflect.Ptr {
+				fieldV.Set(reflect.ValueOf(&strFloat))
+			} else {
+				fieldV.Set(reflect.ValueOf(strFloat))
+			}
+		case float32, *float32:
+			strFloat, err := strconv.ParseFloat(vals[0], 32)
+			if err != nil {
+				return te.XError{Code: "float64-parse-fail", Message: "failed to parse float64 value into field " + key}
+			}
+			strFloat32 := float32(strFloat)
+			if fieldV.Kind() == reflect.Ptr {
+				fieldV.Set(reflect.ValueOf(&strFloat32))
+			} else {
+				fieldV.Set(reflect.ValueOf(strFloat32))
+			}
+		case []string, *[]string:
+			fieldV.Set(reflect.ValueOf(&vals))
+		case datatypes.Date, *datatypes.Date:
+			time, err := time.Parse("2006-01-02T15:04:05.000Z", vals[0])
+			if err != nil {
+				return te.XError{Code: "gormDate-parse-fail", Message: "failed to gorm-date value into field " + key}
+			}
+			date := datatypes.Date(time)
+			if fieldV.Kind() == reflect.Ptr {
+				fieldV.Set(reflect.ValueOf(&date))
+			} else {
+				fieldV.Set(reflect.ValueOf(date))
+			}
+		case time.Time, *time.Time:
+			time, err := time.Parse("2006-01-02T15:04:05.000Z", vals[0])
+			if err != nil {
+				return te.XError{Code: "time-parse-fail", Message: "failed to time value into field " + key}
+			}
+			if fieldV.Kind() == reflect.Ptr {
+				fieldV.Set(reflect.ValueOf(&time))
+			} else {
+				fieldV.Set(reflect.ValueOf(time))
+			}
+		// TODO: make any *[]int as a function
+		case *[]int8:
+			failed := false
+			valX := []int8{}
+			for idx, val := range vals {
+				if valInt, err := strconv.Atoi(val); err != nil {
+					failed = true
+					return te.XError{Code: "[]int8-parse-fail", Message: "failed to parse []uint8 value for field " + key + " at index " + strconv.Itoa(idx)}
+				} else {
+					valX = append(valX, int8(valInt))
+				}
+			}
+			if !failed {
+				fieldV.Set(reflect.ValueOf(valX))
+			}
+
+		}
+	}
+
+	return nil
 }
