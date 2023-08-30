@@ -2,7 +2,6 @@ package semprit
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"net/url"
@@ -90,10 +89,10 @@ func HttpFormData(container any, r *http.Request) error {
 			if rv != "" {
 				rvVal, err := strconv.ParseUint(rv, 10, 64)
 				if err != nil {
-					return errors.New("can not convert \"" + ftName + "\" (value: " + rv + ") into number")
+					return te.XError{Code: "convert-fail", Message: "can not convert \"" + ftName + "\" (value: " + rv + ") into number"}
 				}
 				if fv.OverflowUint(uint64(rvVal)) {
-					return errors.New("value overflow for \"" + ftName + "\" (value: " + rv + ")")
+					return te.XError{Code: "value-overflow", Message: "value overflow for \"" + ftName + "\" (value: " + rv + ")"}
 				} else {
 					fv.SetUint(uint64(rvVal))
 				}
@@ -102,10 +101,10 @@ func HttpFormData(container any, r *http.Request) error {
 			if rv != "" {
 				rvVal, err := strconv.Atoi(rv)
 				if err != nil {
-					return errors.New("can not convert \"" + ftName + "\" (value: " + rv + ") into number")
+					return te.XError{Code: "convert-fail", Message: "can not convert \"" + ftName + "\" (value: " + rv + ") into number"}
 				}
 				if fv.OverflowInt(int64(rvVal)) {
-					return errors.New("value overflow for \"" + ftName + "\" (value: " + rv + ")")
+					return te.XError{Code: "value-overflow", Message: "value overflow for \"" + ftName + "\" (value: " + rv + ")"}
 				} else {
 					fv.SetInt(int64(rvVal))
 				}
@@ -118,10 +117,10 @@ func HttpFormData(container any, r *http.Request) error {
 				}
 				rvVal, err := strconv.ParseFloat(rv, floatType)
 				if err != nil {
-					return errors.New("can not convert \"" + ftName + "\" (value: " + rv + ") into number")
+					return te.XError{Code: "convert-fail", Message: "can not convert \"" + ftName + "\" (value: " + rv + ") into number"}
 				}
 				if fv.OverflowFloat(rvVal) {
-					return errors.New("value overflow for \"" + ftName + "\" (value: " + rv + ")")
+					return te.XError{Code: "value-overflow", Message: "value overflow for \"" + ftName + "\" (value: " + rv + ")"}
 				} else {
 					fv.SetFloat(rvVal)
 				}
