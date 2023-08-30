@@ -34,7 +34,7 @@ func JsonFromIOReader(container any, input io.Reader) error {
 	return nil
 }
 
-func FDFromHttp(container any, r *http.Request) error {
+func FormDataFromHttp(container any, r *http.Request) error {
 	// identiy value and loop if its pointer until reaches non pointer
 	cv := reflect.ValueOf(container)
 
@@ -137,7 +137,7 @@ func FDFromHttp(container any, r *http.Request) error {
 	return nil
 }
 
-func QPFromHttp(container any, url url.URL) error {
+func QueryParamFromUrl(container any, url url.URL) error {
 	cV := reflect.ValueOf(container).Elem()
 	for cV.Kind() == reflect.Pointer || cV.Kind() == reflect.Interface {
 		cV = cV.Elem()
