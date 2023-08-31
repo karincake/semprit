@@ -6,27 +6,23 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
-	"strconv"
-	"strings"
-	"time"
 
 	te "github.com/karincake/tempe/error"
-	"gorm.io/datatypes"
 )
 
 func IOReaderJson(container any, input io.Reader) error {
 	decoder := json.NewDecoder(input)
 	err := decoder.Decode(&container)
 	if err != nil {
-		cV := reflect.ValueOf(container)
-		for cV.Kind() == reflect.Pointer || cV.Kind() == reflect.Interface {
-			cV = cV.Elem()
+		cv := reflect.ValueOf(container)
+		for cv.Kind() == reflect.Pointer || cv.Kind() == reflect.Interface {
+			cv = cv.Elem()
 		}
-		structName := cV.Type().Name()
+		structName := cv.Type().Name()
 		return te.XError{
 			Code:        "parse-fail",
-			Message:     "failed to parse input, error:" + err.Error(),
-			ExpectedVal: "value of" + structName,
+			Message:     "failed to parse input, error: " + err.Error(),
+			ExpectedVal: "value of " + structName,
 		}
 	}
 
@@ -48,7 +44,6 @@ func HttpFormData(container any, r *http.Request) error {
 	}
 
 	// check each field
-	// ct := reflect.TypeOf(cv.Interface()) // keep this for now
 	ct := cv.Type()
 	for i := 0; i < cv.NumField(); i++ {
 		// identify field type and value of the field
@@ -72,175 +67,53 @@ func HttpFormData(container any, r *http.Request) error {
 
 		fvKind := fv.Kind()
 		ftName := ft.Name
-		// fvKindString := fvKind.String()
-		// ftTypeName := ft.Type
-		// fmt.Println(fvKindString, ftTypeName)
-
-		switch {
-		case fvKind == reflect.String:
-			fv.SetString(rv)
-		case fvKind == reflect.Bool:
-			if rv == "true" || rv == "yes" || rv == "1" {
-				fv.SetBool(true)
-			} else if rv == "false" || rv == "no" || rv == "0" {
-				fv.SetBool(false)
-			}
-		case fvKind >= reflect.Uint && fvKind <= reflect.Uint64:
-			if rv != "" {
-				rvVal, err := strconv.ParseUint(rv, 10, 64)
-				if err != nil {
-					return te.XError{Code: "convert-fail", Message: "can not convert \"" + ftName + "\" (value: " + rv + ") into number"}
-				}
-				if fv.OverflowUint(uint64(rvVal)) {
-					return te.XError{Code: "value-overflow", Message: "value overflow for \"" + ftName + "\" (value: " + rv + ")"}
-				} else {
-					fv.SetUint(uint64(rvVal))
-				}
-			}
-		case fvKind >= reflect.Int && fvKind <= reflect.Int64:
-			if rv != "" {
-				rvVal, err := strconv.Atoi(rv)
-				if err != nil {
-					return te.XError{Code: "convert-fail", Message: "can not convert \"" + ftName + "\" (value: " + rv + ") into number"}
-				}
-				if fv.OverflowInt(int64(rvVal)) {
-					return te.XError{Code: "value-overflow", Message: "value overflow for \"" + ftName + "\" (value: " + rv + ")"}
-				} else {
-					fv.SetInt(int64(rvVal))
-				}
-			}
-		case fvKind >= reflect.Float32 && fvKind <= reflect.Float64:
-			if rv != "" {
-				floatType := 32
-				if ftName == "float64" {
-					floatType = 64
-				}
-				rvVal, err := strconv.ParseFloat(rv, floatType)
-				if err != nil {
-					return te.XError{Code: "convert-fail", Message: "can not convert \"" + ftName + "\" (value: " + rv + ") into number"}
-				}
-				if fv.OverflowFloat(rvVal) {
-					return te.XError{Code: "value-overflow", Message: "value overflow for \"" + ftName + "\" (value: " + rv + ")"}
-				} else {
-					fv.SetFloat(rvVal)
-				}
-			}
+		err := reflectValuFiller(fv, fvKind, ftName, rv)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
 func UrlQueryParam(container any, url url.URL) error {
-	cV := reflect.ValueOf(container).Elem()
-	for cV.Kind() == reflect.Pointer || cV.Kind() == reflect.Interface {
-		cV = cV.Elem()
+	// identiy value and loop if its pointer until reaches non pointer
+	cv := reflect.ValueOf(container)
+
+	// loop until we get what kind lays behind the input
+	for cv.Kind() == reflect.Pointer || cv.Kind() == reflect.Interface {
+		cv = cv.Elem()
 	}
 
-	cT := cV.Type()
-	values := url.Query()
-	for i := 0; i < cV.NumField(); i++ {
-		fv := cV.Field(i)
-		ft := cT.Field(i)
+	// non struct cant be filled
+	if cv.Kind() != reflect.Struct {
+		panic("input requires struct type")
+	}
 
+	ct := cv.Type()
+	values := url.Query()
+	for i := 0; i < cv.NumField(); i++ {
+		// identify field type and value of the field
+		ft := ct.Field(i)
+		fv := cv.Field(i)
+
+		for fv.Kind() == reflect.Ptr {
+			fv = fv.Elem()
+		}
 		if !fv.CanSet() {
 			continue
 		}
 
 		key := keyOrJsonTag(ft.Name, ft.Tag.Get("json"))
-
 		vals, ok := values[key]
 		if !ok {
 			continue
 		}
 
-		switch fv.Interface().(type) {
-		case bool, *bool:
-			var v bool
-			fvS := strings.ToLower(vals[0])
-			if fvS == "true" || fvS == "yes" || fvS == "1" {
-				v = true
-			} else if fvS == "false" || fvS == "no" || fvS == "0" {
-				v = false
-			} else {
-				return te.XError{Code: "bool-parse-fail", Message: "failed to parse bool value into field " + key}
-			}
-			if fv.Kind() == reflect.Ptr {
-				fv.Set(reflect.ValueOf(&v))
-			} else {
-				fv.Set(reflect.ValueOf(v))
-			}
-		case string, *string:
-			if fv.Kind() == reflect.Ptr {
-				fv.Set(reflect.ValueOf(&vals[0]))
-			} else {
-				fv.Set(reflect.ValueOf(vals[0]))
-			}
-		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, *int, *int8, *int16, *int32, *int64, *uint, *uint8, *uint16, *uint32, *uint64:
-			if valInt, err := strconv.Atoi(vals[0]); err != nil {
-				return te.XError{Code: "int-parse-fail", Message: "failed to parse int value into field " + key}
-			} else {
-				fv.Set(intToVal(valInt, fv))
-			}
-		case float64, *float64:
-			strFloat, err := strconv.ParseFloat(vals[0], 64)
-			if err != nil {
-				return te.XError{Code: "float32-parse-fail", Message: "failed to parse float32 value into field " + key}
-			}
-			if fv.Kind() == reflect.Ptr {
-				fv.Set(reflect.ValueOf(&strFloat))
-			} else {
-				fv.Set(reflect.ValueOf(strFloat))
-			}
-		case float32, *float32:
-			strFloat, err := strconv.ParseFloat(vals[0], 32)
-			if err != nil {
-				return te.XError{Code: "float64-parse-fail", Message: "failed to parse float64 value into field " + key}
-			}
-			strFloat32 := float32(strFloat)
-			if fv.Kind() == reflect.Ptr {
-				fv.Set(reflect.ValueOf(&strFloat32))
-			} else {
-				fv.Set(reflect.ValueOf(strFloat32))
-			}
-		case []string, *[]string:
-			fv.Set(reflect.ValueOf(&vals))
-		case datatypes.Date, *datatypes.Date:
-			time, err := time.Parse("2006-01-02T15:04:05.000Z", vals[0])
-			if err != nil {
-				return te.XError{Code: "gormDate-parse-fail", Message: "failed to gorm-date value into field " + key}
-			}
-			date := datatypes.Date(time)
-			if fv.Kind() == reflect.Ptr {
-				fv.Set(reflect.ValueOf(&date))
-			} else {
-				fv.Set(reflect.ValueOf(date))
-			}
-		case time.Time, *time.Time:
-			time, err := time.Parse("2006-01-02T15:04:05.000Z", vals[0])
-			if err != nil {
-				return te.XError{Code: "time-parse-fail", Message: "failed to time value into field " + key}
-			}
-			if fv.Kind() == reflect.Ptr {
-				fv.Set(reflect.ValueOf(&time))
-			} else {
-				fv.Set(reflect.ValueOf(time))
-			}
-		// TODO: make any *[]int as a function
-		case *[]int8:
-			failed := false
-			valX := []int8{}
-			for idx, val := range vals {
-				if valInt, err := strconv.Atoi(val); err != nil {
-					failed = true
-					return te.XError{Code: "[]int8-parse-fail", Message: "failed to parse []uint8 value for field " + key + " at index " + strconv.Itoa(idx)}
-				} else {
-					valX = append(valX, int8(valInt))
-				}
-			}
-			if !failed {
-				fv.Set(reflect.ValueOf(valX))
-			}
-
+		fvKind := fv.Kind()
+		ftName := ft.Name
+		err := reflectValuFiller(fv, fvKind, ftName, vals[0])
+		if err != nil {
+			return err
 		}
 	}
 

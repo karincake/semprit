@@ -10,7 +10,7 @@ import (
 	s "github.com/karincake/semprit"
 )
 
-func TestMediumDataNormal(t *testing.T) {
+func TestFormDataMediumDataNormal(t *testing.T) {
 	// data
 	dataAddress := ""
 	dataSocialScore := 0
@@ -39,7 +39,8 @@ func TestMediumDataNormal(t *testing.T) {
 		NetWorth:      200000,
 	}
 
-	// mock request, make it fast: import from "want"
+	// mock request, make it fast: import from "want" becase what we
+	// need is the process
 	r, _ := http.NewRequest("POST", "/", nil)
 	r.PostForm = make(url.Values)
 	r.PostForm.Add("name", want.Name)
@@ -71,19 +72,7 @@ func TestMediumDataNormal(t *testing.T) {
 	}
 }
 
-func TestMediumDataCustom(t *testing.T) {
-	// mock request
-	r, _ := http.NewRequest("POST", "/", nil)
-	r.PostForm = make(url.Values)
-	r.PostForm.Add("nameValidity", "valid")
-	r.PostForm.Add("marriedStatus", "true")
-	r.PostForm.Add("scoreClass", "1")
-	r.PostForm.Add("creditScoreClass", "1")
-	r.PostForm.Add("ageClass", "1")
-	r.PostForm.Add("hoursActiveClass", "1")
-	r.PostForm.Add("incomeClass", "1")
-	r.PostForm.Add("netWorthClass", "1")
-
+func TestFormDataMediumDataCustom(t *testing.T) {
 	// data
 	data := DataMediumCT{}
 
@@ -98,6 +87,18 @@ func TestMediumDataCustom(t *testing.T) {
 		IncomeRateClass:   CTFFirst,
 		NetWorthRateClass: CTF64First,
 	}
+
+	// mock request
+	r, _ := http.NewRequest("POST", "/", nil)
+	r.PostForm = make(url.Values)
+	r.PostForm.Add("nameValidity", "valid")
+	r.PostForm.Add("marriedStatus", "true")
+	r.PostForm.Add("scoreClass", "1")
+	r.PostForm.Add("creditScoreClass", "1")
+	r.PostForm.Add("ageClass", "1")
+	r.PostForm.Add("hoursActiveClass", "1")
+	r.PostForm.Add("incomeClass", "1")
+	r.PostForm.Add("netWorthClass", "1")
 
 	if err := s.HttpFormData(&data, r); err != nil {
 		t.Error("failed to parse request: ", err)

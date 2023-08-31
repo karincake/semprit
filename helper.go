@@ -1,6 +1,11 @@
 package semprit
 
-import "reflect"
+import (
+	"reflect"
+	"strconv"
+
+	te "github.com/karincake/tempe/error"
+)
 
 func keyOrJsonTag(key, jsonTag string) string {
 	if jsonTag == "" {
@@ -16,58 +21,57 @@ func keyOrJsonTag(key, jsonTag string) string {
 	return string(tagByte[:pos])
 }
 
-func intToVal(input int, kind reflect.Value) reflect.Value {
-	switch kind.Interface().(type) {
-	case int:
-		return reflect.ValueOf(input)
-	case int8:
-		return reflect.ValueOf(int8(input))
-	case int16:
-		return reflect.ValueOf(int16(input))
-	case int32:
-		return reflect.ValueOf(int32(input))
-	case int64:
-		return reflect.ValueOf(int64(input))
-	case uint:
-		return reflect.ValueOf(uint(input))
-	case uint8:
-		return reflect.ValueOf(uint8(input))
-	case uint16:
-		return reflect.ValueOf(uint16(input))
-	case uint32:
-		return reflect.ValueOf(uint32(input))
-	case uint64:
-		return reflect.ValueOf(uint64(input))
-	case *int:
-		x := input
-		return reflect.ValueOf(&x)
-	case *int8:
-		x := int8(input)
-		return reflect.ValueOf(&x)
-	case *int16:
-		x := int16(input)
-		return reflect.ValueOf(&x)
-	case *int32:
-		x := int32(input)
-		return reflect.ValueOf(&x)
-	case *int64:
-		x := int64(input)
-		return reflect.ValueOf(&x)
-	case *uint:
-		x := uint(input)
-		return reflect.ValueOf(&x)
-	case *uint8:
-		x := uint8(input)
-		return reflect.ValueOf(&x)
-	case *uint16:
-		x := uint16(input)
-		return reflect.ValueOf(&x)
-	case *uint32:
-		x := uint32(input)
-		return reflect.ValueOf(&x)
-	case *uint64:
-		x := uint64(input)
-		return reflect.ValueOf(&x)
+func reflectValuFiller(fv reflect.Value, vk reflect.Kind, ftName, rvs string) error {
+	switch {
+	case vk == reflect.String:
+		fv.SetString(rvs)
+	case vk == reflect.Bool:
+		if rvs == "true" || rvs == "yes" || rvs == "1" {
+			fv.SetBool(true)
+		} else if rvs == "false" || rvs == "no" || rvs == "0" {
+			fv.SetBool(false)
+		}
+	case vk >= reflect.Uint && vk <= reflect.Uint64:
+		if rvs != "" {
+			rvsVal, err := strconv.ParseUint(rvs, 10, 64)
+			if err != nil {
+				return te.XError{Code: "convert-fail", Message: "can not convert \"" + ftName + "\" (value: " + rvs + ") into number"}
+			}
+			if fv.OverflowUint(uint64(rvsVal)) {
+				return te.XError{Code: "value-overflow", Message: "value overflow for \"" + ftName + "\" (value: " + rvs + ")"}
+			} else {
+				fv.SetUint(uint64(rvsVal))
+			}
+		}
+	case vk >= reflect.Int && vk <= reflect.Int64:
+		if rvs != "" {
+			rvsVal, err := strconv.Atoi(rvs)
+			if err != nil {
+				return te.XError{Code: "convert-fail", Message: "can not convert \"" + ftName + "\" (value: " + rvs + ") into number"}
+			}
+			if fv.OverflowInt(int64(rvsVal)) {
+				return te.XError{Code: "value-overflow", Message: "value overflow for \"" + ftName + "\" (value: " + rvs + ")"}
+			} else {
+				fv.SetInt(int64(rvsVal))
+			}
+		}
+	case vk >= reflect.Float32 && vk <= reflect.Float64:
+		if rvs != "" {
+			floatType := 32
+			if ftName == "float64" {
+				floatType = 64
+			}
+			rvsVal, err := strconv.ParseFloat(rvs, floatType)
+			if err != nil {
+				return te.XError{Code: "convert-fail", Message: "can not convert \"" + ftName + "\" (value: " + rvs + ") into number"}
+			}
+			if fv.OverflowFloat(rvsVal) {
+				return te.XError{Code: "value-overflow", Message: "value overflow for \"" + ftName + "\" (value: " + rvs + ")"}
+			} else {
+				fv.SetFloat(rvsVal)
+			}
+		}
 	}
-	return reflect.ValueOf(0)
+
+	return nil
 }
