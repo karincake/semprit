@@ -3,14 +3,13 @@ package test
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 	"testing"
 
 	s "github.com/karincake/semprit"
 )
 
-func TestFormDataMediumDataNormal(t *testing.T) {
+func TestQueryParamMediumDataNormal(t *testing.T) {
 	// data
 	dataAddress := ""
 	dataSocialScore := 0
@@ -41,21 +40,23 @@ func TestFormDataMediumDataNormal(t *testing.T) {
 
 	// mock request, make it fast: import from "want" becase what we
 	// need is the process
-	r, _ := http.NewRequest("POST", "/", nil)
-	r.PostForm = make(url.Values)
-	r.PostForm.Add("name", want.Name)
-	r.PostForm.Add("address", *want.Address)
-	r.PostForm.Add("married", "true")
-	r.PostForm.Add("score", strconv.Itoa(int(want.Score)))
-	r.PostForm.Add("creditScore", strconv.Itoa(int(want.CreditScore)))
-	r.PostForm.Add("socialScore", strconv.Itoa(int(*want.SocialScore)))
-	r.PostForm.Add("age", strconv.Itoa(int(want.Age)))
-	r.PostForm.Add("bloodPressure", strconv.Itoa(int(want.BloodPressure)))
-	r.PostForm.Add("hoursActive", strconv.Itoa(int(*want.HoursActive)))
-	r.PostForm.Add("income", fmt.Sprintf("%.0f", want.Income))
-	r.PostForm.Add("netWorth", fmt.Sprintf("%.0f", want.NetWorth))
+	r, _ := http.NewRequest("GET", "/", nil)
+	// mock url encoded like : ?name=Santo%20Sembodo&address=JL%20Localhost%202023&married=true&score=20 ...
+	q := r.URL.Query()
+	q.Add("name", want.Name)
+	q.Add("address", *want.Address)
+	q.Add("married", "true")
+	q.Add("score", strconv.Itoa(int(want.Score)))
+	q.Add("creditScore", strconv.Itoa(int(want.CreditScore)))
+	q.Add("socialScore", strconv.Itoa(int(*want.SocialScore)))
+	q.Add("age", strconv.Itoa(int(want.Age)))
+	q.Add("bloodPressure", strconv.Itoa(int(want.BloodPressure)))
+	q.Add("hoursActive", strconv.Itoa(int(*want.HoursActive)))
+	q.Add("income", fmt.Sprintf("%.0f", want.Income))
+	q.Add("netWorth", fmt.Sprintf("%.0f", want.NetWorth))
+	r.URL.RawQuery = q.Encode()
 
-	if err := s.HttpFormData(&data, r); err != nil {
+	if err := s.UrlQueryParam(&data, *r.URL); err != nil {
 		t.Error("failed to parse request: ", err)
 	} else {
 		if data.Name != want.Name || *data.Address != *want.Address || data.Married != want.Married ||
@@ -72,7 +73,7 @@ func TestFormDataMediumDataNormal(t *testing.T) {
 	}
 }
 
-func TestFormDataMediumDataCustom(t *testing.T) {
+func TestQueryParamMediumDataCustom(t *testing.T) {
 	// data
 	data := DataMediumCT{}
 
@@ -89,18 +90,20 @@ func TestFormDataMediumDataCustom(t *testing.T) {
 	}
 
 	// mock request
-	r, _ := http.NewRequest("POST", "/", nil)
-	r.PostForm = make(url.Values)
-	r.PostForm.Add("nameValidity", "valid")
-	r.PostForm.Add("marriedStatus", "true")
-	r.PostForm.Add("scoreClass", "1")
-	r.PostForm.Add("creditScoreClass", "1")
-	r.PostForm.Add("ageClass", "1")
-	r.PostForm.Add("hoursActiveClass", "1")
-	r.PostForm.Add("incomeClass", "1")
-	r.PostForm.Add("netWorthClass", "1")
+	r, _ := http.NewRequest("GET", "/", nil)
+	// mock url encoded like : ?nameValidity=valid&marriedStatus=true&scoreClass=1 ...
+	q := r.URL.Query()
+	q.Add("nameValidity", "valid")
+	q.Add("marriedStatus", "true")
+	q.Add("scoreClass", "1")
+	q.Add("creditScoreClass", "1")
+	q.Add("ageClass", "1")
+	q.Add("hoursActiveClass", "1")
+	q.Add("incomeClass", "1")
+	q.Add("netWorthClass", "1")
+	r.URL.RawQuery = q.Encode()
 
-	if err := s.HttpFormData(&data, r); err != nil {
+	if err := s.UrlQueryParam(&data, *r.URL); err != nil {
 		t.Error("failed to parse request: ", err)
 	} else {
 		if data != want {

@@ -105,12 +105,12 @@ type DataMedium struct {
 }
 
 type DataMediumCT struct {
-	NameValidity      CustomTypeString  `json:"name"`
-	MarriedStatus     CustomTypeBool    `json:"married"`
-	ScoreClass        CustomTypeInt8    `json:"score"`
-	CreditScoreClass  CustomTypeInt     `json:"creditScore"`
-	AgeClass          CustomTypeUint8   `json:"age"`
-	HoursActiveClass  CustomTypeUint    `json:"hoursActive"`
-	IncomeRateClass   CustomTypeFloat32 `json:"income"`
-	NetWorthRateClass CustomTypeFloat64 `json:"netWorth"`
+	NameValidity      CustomTypeString  `json:"nameValidity"`
+	MarriedStatus     CustomTypeBool    `json:"marriedStatus"`
+	ScoreClass        CustomTypeInt8    `json:"scoreClass"`
+	CreditScoreClass  CustomTypeInt     `json:"creditScoreClass"`
+	AgeClass          CustomTypeUint8   `json:"ageClass"`
+	HoursActiveClass  CustomTypeUint    `json:"hoursActiveClass"`
+	IncomeRateClass   CustomTypeFloat32 `json:"incomeClass"`
+	NetWorthRateClass CustomTypeFloat64 `json:"netWorthClass"`
 }
