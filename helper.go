@@ -21,7 +21,7 @@ func keyOrJsonTag(key, jsonTag string) string {
 	return string(tagByte[:pos])
 }
 
-func reflectValuFiller(fv reflect.Value, vk reflect.Kind, ftName, rvs string) error {
+func reflectValueFiller(fv reflect.Value, vk reflect.Kind, ftName, rvs string) error {
 	switch {
 	case vk == reflect.String:
 		fv.SetString(rvs)

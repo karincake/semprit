@@ -10,6 +10,7 @@ import (
 	te "github.com/karincake/tempe/error"
 )
 
+// Fill struct with io.reader content, desired format is json
 func IOReaderJson(container any, input io.Reader) error {
 	decoder := json.NewDecoder(input)
 	err := decoder.Decode(&container)
@@ -29,6 +30,7 @@ func IOReaderJson(container any, input io.Reader) error {
 	return nil
 }
 
+// Fill struct with form-data content, desired format is key-val pairs
 func HttpFormData(container any, r *http.Request) error {
 	// identiy value and loop if its pointer until reaches non pointer
 	cv := reflect.ValueOf(container)
@@ -67,7 +69,7 @@ func HttpFormData(container any, r *http.Request) error {
 
 		fvKind := fv.Kind()
 		ftName := ft.Name
-		err := reflectValuFiller(fv, fvKind, ftName, rv)
+		err := reflectValueFiller(fv, fvKind, ftName, rv)
 		if err != nil {
 			return err
 		}
@@ -75,6 +77,7 @@ func HttpFormData(container any, r *http.Request) error {
 	return nil
 }
 
+// Fill struct with url encoded content, desired format is url key-val pairs
 func UrlQueryParam(container any, url url.URL) error {
 	// identiy value and loop if its pointer until reaches non pointer
 	cv := reflect.ValueOf(container)
@@ -111,7 +114,7 @@ func UrlQueryParam(container any, url url.URL) error {
 
 		fvKind := fv.Kind()
 		ftName := ft.Name
-		err := reflectValuFiller(fv, fvKind, ftName, vals[0])
+		err := reflectValueFiller(fv, fvKind, ftName, vals[0])
 		if err != nil {
 			return err
 		}
