@@ -10,27 +10,7 @@ import (
 	te "github.com/karincake/tempe/error"
 )
 
-// Fill struct with io.reader content, desired format is json
-func IOReaderJson(container any, input io.Reader) error {
-	decoder := json.NewDecoder(input)
-	err := decoder.Decode(&container)
-	if err != nil {
-		cv := reflect.ValueOf(container)
-		for cv.Kind() == reflect.Pointer || cv.Kind() == reflect.Interface {
-			cv = cv.Elem()
-		}
-		structName := cv.Type().Name()
-		return te.XError{
-			Code:        "parse-fail",
-			Message:     "failed to parse input, error: " + err.Error(),
-			ExpectedVal: "value of " + structName,
-		}
-	}
-
-	return nil
-}
-
-// Fill struct with form-data content, desired format is key-val pairs
+// Fill struct with form-data content
 func HttpFormData(container any, r *http.Request) error {
 	// identiy value and loop if its pointer until reaches non pointer
 	cv := reflect.ValueOf(container)
@@ -77,7 +57,7 @@ func HttpFormData(container any, r *http.Request) error {
 	return nil
 }
 
-// Fill struct with url encoded content, desired format is url key-val pairs
+// Fill struct with url encoded content
 func UrlQueryParam(container any, url url.URL) error {
 	// identiy value and loop if its pointer until reaches non pointer
 	cv := reflect.ValueOf(container)
@@ -117,6 +97,26 @@ func UrlQueryParam(container any, url url.URL) error {
 		err := reflectValueFiller(fv, fvKind, ftName, vals[0])
 		if err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+// Fill struct json content from io.reader
+func IOReaderJson(container any, input io.Reader) error {
+	decoder := json.NewDecoder(input)
+	err := decoder.Decode(&container)
+	if err != nil {
+		cv := reflect.ValueOf(container)
+		for cv.Kind() == reflect.Pointer || cv.Kind() == reflect.Interface {
+			cv = cv.Elem()
+		}
+		structName := cv.Type().Name()
+		return te.XError{
+			Code:        "parse-fail",
+			Message:     "failed to parse input, error: " + err.Error(),
+			ExpectedVal: "value of " + structName,
 		}
 	}
 
