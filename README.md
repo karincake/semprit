@@ -1,17 +1,17 @@
 # Semprit
-Is a struct filler from various sources. Due to its nature as data parser, each process stops the moment it meets an error, and immediately return the error.
+Is a struct filler from various sources. 
 
 For now Semprit is able to import data from 3 sources:
 - Form-Data from Net/HTTP
 - Query Param from Net/Url
-- IoReader with json content format (this is just wrapper around)
+- IoReader with json content format, this is just wrapper around for json.Unmarshal functtion. Due to json.Unmarshal limitations, any errors error occured will only show the first error.
 
 ## Installation and Usage
-Just use go get command
+Get the package
 
 `go get github.com/karincake/semprit`
 
-Import in the pakcage
+Import the pakcage
 
 `import "github.com/karincake/semprit"`
 
