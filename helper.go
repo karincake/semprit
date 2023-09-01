@@ -22,7 +22,6 @@ func keyOrJsonTag(key, jsonTag string) string {
 }
 
 func reflectValueFiller(fv reflect.Value, vk reflect.Kind, ftName, rvs string) error {
-	errList := te.XErrors{}
 	switch {
 	case vk == reflect.String:
 		fv.SetString(rvs)
@@ -36,10 +35,10 @@ func reflectValueFiller(fv reflect.Value, vk reflect.Kind, ftName, rvs string) e
 		if rvs != "" {
 			rvsVal, err := strconv.ParseUint(rvs, 10, 64)
 			if err != nil {
-				errList[ftName] = te.XError{Code: "convert-fail", Message: "can not convert \"" + ftName + "\" (value: " + rvs + ") into number"}
+				return te.XError{Code: "convert-fail", Message: "can not convert \"" + ftName + "\" (value: " + rvs + ") into number"}
 			}
 			if fv.OverflowUint(uint64(rvsVal)) {
-				errList[ftName] = te.XError{Code: "value-overflow", Message: "value overflow for \"" + ftName + "\" (value: " + rvs + ")"}
+				return te.XError{Code: "value-overflow", Message: "value overflow for \"" + ftName + "\" (value: " + rvs + ")"}
 			} else {
 				fv.SetUint(uint64(rvsVal))
 			}
@@ -48,10 +47,10 @@ func reflectValueFiller(fv reflect.Value, vk reflect.Kind, ftName, rvs string) e
 		if rvs != "" {
 			rvsVal, err := strconv.Atoi(rvs)
 			if err != nil {
-				errList[ftName] = te.XError{Code: "convert-fail", Message: "can not convert \"" + ftName + "\" (value: " + rvs + ") into number"}
+				return te.XError{Code: "convert-fail", Message: "can not convert \"" + ftName + "\" (value: " + rvs + ") into number"}
 			}
 			if fv.OverflowInt(int64(rvsVal)) {
-				errList[ftName] = te.XError{Code: "value-overflow", Message: "value overflow for \"" + ftName + "\" (value: " + rvs + ")"}
+				return te.XError{Code: "value-overflow", Message: "value overflow for \"" + ftName + "\" (value: " + rvs + ")"}
 			} else {
 				fv.SetInt(int64(rvsVal))
 			}
@@ -64,18 +63,15 @@ func reflectValueFiller(fv reflect.Value, vk reflect.Kind, ftName, rvs string) e
 			}
 			rvsVal, err := strconv.ParseFloat(rvs, floatType)
 			if err != nil {
-				errList[ftName] = te.XError{Code: "convert-fail", Message: "can not convert \"" + ftName + "\" (value: " + rvs + ") into number"}
+				return te.XError{Code: "convert-fail", Message: "can not convert \"" + ftName + "\" (value: " + rvs + ") into number"}
 			}
 			if fv.OverflowFloat(rvsVal) {
-				errList[ftName] = te.XError{Code: "value-overflow", Message: "value overflow for \"" + ftName + "\" (value: " + rvs + ")"}
+				return te.XError{Code: "value-overflow", Message: "value overflow for \"" + ftName + "\" (value: " + rvs + ")"}
 			} else {
 				fv.SetFloat(rvsVal)
 			}
 		}
 	}
 
-	if len(errList) > 0 {
-		return errList
-	}
 	return nil
 }

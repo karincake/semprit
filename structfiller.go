@@ -26,6 +26,7 @@ func HttpFormData(container any, r *http.Request) error {
 	}
 
 	// check each field
+	errList := te.XErrors{}
 	ct := cv.Type()
 	for i := 0; i < cv.NumField(); i++ {
 		// identify field type and value of the field
@@ -51,8 +52,12 @@ func HttpFormData(container any, r *http.Request) error {
 		ftName := ft.Name
 		err := reflectValueFiller(fv, fvKind, ftName, rv)
 		if err != nil {
-			return err
+			errList[key] = err.(te.XError)
 		}
+	}
+
+	if len(errList) > 0 {
+		return errList
 	}
 	return nil
 }
@@ -72,6 +77,7 @@ func UrlQueryParam(container any, url url.URL) error {
 		panic("input requires struct type")
 	}
 
+	errList := te.XErrors{}
 	ct := cv.Type()
 	values := url.Query()
 	for i := 0; i < cv.NumField(); i++ {
@@ -96,10 +102,13 @@ func UrlQueryParam(container any, url url.URL) error {
 		ftName := ft.Name
 		err := reflectValueFiller(fv, fvKind, ftName, vals[0])
 		if err != nil {
-			return err
+			errList[key] = err.(te.XError)
 		}
 	}
 
+	if len(errList) > 0 {
+		return errList
+	}
 	return nil
 }
 
