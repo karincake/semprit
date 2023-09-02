@@ -12,7 +12,7 @@ func BenchmarkQueryParamMediumDataNormal(b *testing.B) {
 	dataAddress := ""
 	dataSocialScore := 0
 	dataHoursActive := uint(0)
-	data := DataMedium{
+	data := DataLarge{
 		Address:     &dataAddress,
 		SocialScore: &dataSocialScore,
 		HoursActive: &dataHoursActive,
@@ -44,7 +44,7 @@ func BenchmarkQueryParamMediumDataNormal(b *testing.B) {
 
 func BenchmarkQueryParamMediumDataCustom(b *testing.B) {
 	// data
-	data := DataMediumCT{}
+	data := DataLargeCT{}
 
 	// mock request
 	r, _ := http.NewRequest("GET", "/", nil)

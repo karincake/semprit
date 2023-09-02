@@ -1,10 +1,5 @@
 # Semprit
-Is a struct filler from various sources. 
-
-For now Semprit is able to import data from 3 sources:
-- Form-Data from Net/HTTP
-- Query Param from Net/Url
-- IoReader with json content format, this is just wrapper around for json.Unmarshal functtion. Due to json.Unmarshal limitations, any errors error occured will only show the first error.
+Package to help in filling struct with data from various sources. 
 
 ## Installation and Usage
 Get the package
@@ -25,6 +20,8 @@ if err != nil {
 }
 ```
 
-The other function that can be used are :
-- `UrlQueryParam(&struct, url.URL)`
-- `IOReaderJson(&struct, io.Reader)`
+## Available Functions
+There are 3 functions available for filling struct
+- `HttpFormData(&struct, *http.Request)`, to fill struct with data from http.Request form-data.
+- `UrlQueryParam(&struct, url.URL)`, to fill struct with data from url query parameter
+- `IOReaderJson(&struct, io.Reader)`, to fill struct with data from io.Reader that having json encoding content
