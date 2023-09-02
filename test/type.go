@@ -90,7 +90,7 @@ type DataSmallCustomTypeFloat64 struct {
 	NetWorth float64 `json:"netWorth"`
 }
 
-type DataMedium struct {
+type DataLarge struct {
 	Name          string  `json:"name"`
 	Address       *string `json:"address,omitempty"`
 	Married       bool    `json:"married"`
@@ -104,7 +104,7 @@ type DataMedium struct {
 	NetWorth      float64 `json:"netWorth"`
 }
 
-type DataMediumCT struct {
+type DataLargeCT struct {
 	NameValidity      CustomTypeString  `json:"nameValidity"`
 	MarriedStatus     CustomTypeBool    `json:"marriedStatus"`
 	ScoreClass        CustomTypeInt8    `json:"scoreClass"`

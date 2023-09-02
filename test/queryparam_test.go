@@ -14,7 +14,7 @@ func TestQueryParamMediumDataNormal(t *testing.T) {
 	dataAddress := ""
 	dataSocialScore := 0
 	dataHoursActive := uint(0)
-	data := DataMedium{
+	data := DataLarge{
 		Address:     &dataAddress,
 		SocialScore: &dataSocialScore,
 		HoursActive: &dataHoursActive,
@@ -24,7 +24,7 @@ func TestQueryParamMediumDataNormal(t *testing.T) {
 	wantAddress := "JL Localhost 2023"
 	wantSocialScore := 25000
 	wantHoursActive := uint(30000)
-	want := DataMedium{
+	want := DataLarge{
 		Name:          "Santo Sembodo",
 		Address:       &wantAddress,
 		Married:       true,
@@ -75,10 +75,10 @@ func TestQueryParamMediumDataNormal(t *testing.T) {
 
 func TestQueryParamMediumDataCustom(t *testing.T) {
 	// data
-	data := DataMediumCT{}
+	data := DataLargeCT{}
 
 	// want
-	want := DataMediumCT{
+	want := DataLargeCT{
 		NameValidity:      CTSValid,
 		MarriedStatus:     CTBValid,
 		ScoreClass:        CTI8First,

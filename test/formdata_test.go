@@ -10,12 +10,12 @@ import (
 	s "github.com/karincake/semprit"
 )
 
-func TestFormDataMediumDataNormal(t *testing.T) {
+func TestFormDataLargeDataNormal(t *testing.T) {
 	// data
 	dataAddress := ""
 	dataSocialScore := 0
 	dataHoursActive := uint(0)
-	data := DataMedium{
+	data := DataLarge{
 		Address:     &dataAddress,
 		SocialScore: &dataSocialScore,
 		HoursActive: &dataHoursActive,
@@ -25,7 +25,7 @@ func TestFormDataMediumDataNormal(t *testing.T) {
 	wantAddress := "JL Localhost 2023"
 	wantSocialScore := 25000
 	wantHoursActive := uint(30000)
-	want := DataMedium{
+	want := DataLarge{
 		Name:          "Santo Sembodo",
 		Address:       &wantAddress,
 		Married:       true,
@@ -72,12 +72,12 @@ func TestFormDataMediumDataNormal(t *testing.T) {
 	}
 }
 
-func TestFormDataMediumDataCustom(t *testing.T) {
+func TestFormDataLargeDataCustom(t *testing.T) {
 	// data
-	data := DataMediumCT{}
+	data := DataLargeCT{}
 
 	// want
-	want := DataMediumCT{
+	want := DataLargeCT{
 		NameValidity:      CTSValid,
 		MarriedStatus:     CTBValid,
 		ScoreClass:        CTI8First,

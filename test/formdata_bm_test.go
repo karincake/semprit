@@ -8,12 +8,12 @@ import (
 	s "github.com/karincake/semprit"
 )
 
-func BenchmarkFormDataMediumDataNormal(b *testing.B) {
+func BenchmarkFormDataLargeDataNormal(b *testing.B) {
 	// data
 	dataAddress := ""
 	dataSocialScore := 0
 	dataHoursActive := uint(0)
-	data := DataMedium{
+	data := DataLarge{
 		Address:     &dataAddress,
 		SocialScore: &dataSocialScore,
 		HoursActive: &dataHoursActive,
@@ -41,9 +41,9 @@ func BenchmarkFormDataMediumDataNormal(b *testing.B) {
 	}
 }
 
-func BenchmarkFormDataMediumDataCustom(b *testing.B) {
+func BenchmarkFormDataLargeDataCustom(b *testing.B) {
 	// data
-	data := DataMediumCT{}
+	data := DataLargeCT{}
 
 	// mock request
 	r, _ := http.NewRequest("POST", "/", nil)
