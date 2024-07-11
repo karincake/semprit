@@ -85,22 +85,20 @@ func UrlQueryParam(container any, url url.URL) error {
 		ft := ct.Field(i)
 		fv := cv.Field(i)
 
-		for fv.Kind() == reflect.Ptr {
-			fv = fv.Elem()
-		}
-		if !fv.CanSet() {
-			continue
-		}
-
 		key := keyOrJsonTag(ft.Name, ft.Tag.Get("json"))
 		vals, ok := values[key]
 		if !ok {
 			continue
 		}
 
-		fvKind := fv.Kind()
 		ftName := ft.Name
-		err := reflectValueFiller(fv, fvKind, ftName, vals[0])
+		fvKind := fv.Kind()
+		var err error
+		if fvKind != reflect.Pointer {
+			err = reflectValueFiller(fv, fvKind, ftName, vals[0])
+		} else {
+			err = reflectPointerValueFiller(fv, fv.Type().Elem().Kind(), ftName, vals[0])
+		}
 		if err != nil {
 			errList[key] = err.(d.FieldError)
 		}
