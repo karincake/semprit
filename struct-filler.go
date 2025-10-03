@@ -85,6 +85,24 @@ func UrlQueryParam(container any, url url.URL) error {
 		ft := ct.Field(i)
 		fv := cv.Field(i)
 
+		if fv.Kind() == reflect.Struct {
+			// Skip only known leaf types like time.Time
+			if fv.Type().PkgPath() == "time" && fv.Type().Name() == "Time" {
+				// do nothing, skip
+			} else {
+				subPtr := fv.Addr().Interface()
+				err := UrlQueryParam(subPtr, url)
+				if err != nil {
+					if ferrs, ok := err.(d.FieldErrors); ok {
+						for k, v := range ferrs {
+							errList[k] = v
+						}
+					}
+				}
+				continue
+			}
+		}
+
 		key := keyOrJsonTag(ft.Name, ft.Tag.Get("json"))
 		vals, ok := values[key]
 		if !ok {
